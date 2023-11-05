@@ -1,0 +1,116 @@
+K:
+Prep Used:
+
+transform_set1 = lambda d, is_test: pipe(d,[
+    make_resize_block(16, pre_fill=0, order=0),
+    lambda d: savgol_block(d,5,2,1,2),
+    lambda d: np.ma.filled(d,0)
+]) 
+
+Layer selection:
+transformed, transform_next, indices = spearman_method(transform_function(all_data,False),gt["K"],final_count=30)
+transformed_test = transform_next(transform_function(all_data_test,True))
+
+Model:
+CNN2DNetworkParams(
+    conv=[Conv2DParams(kernel=(4,4),pool_size=(3,3),filters=64,normalization=True,activation="relu", dropout=drop),
+          Conv2DParams(kernel=(4,4),pool_size=(2,2),filters=512, normalization=True,activation="relu", dropout=drop),
+          Conv2DParams(kernel=(3,3),pool_size=(2,2),filters=512, normalization=True,activation="relu", dropout=drop),
+          ],
+    flatten=FlattenParams(dropout=drop,normalization=True),
+    deep=[DeepLayerParams(neurons=1000,dropout=drop,normalization=True),
+          DeepLayerParams(neurons=400,dropout=drop,normalization=True)],
+    generic=GenericNeuralNetworkParams(
+        prepare_function=lambda data, is_test: pipe(data,[
+            lambda d: d]), 
+        epochs=epochs,
+        optimizer=optimizer
+        )
+)
+
+--------------------
+P:
+Prep Used:
+transform_set3 = lambda d, is_test: pipe(d,[
+    make_resize_block(24, pre_fill=0, order=0,extend_strategy="padding"),
+    lambda d: savgol_block(d,5,2,1,2),
+    lambda d: np.ma.filled(d,0)
+]) 
+
+Layer selection:
+transformed, transform_next, indices = reliefF_method(transform_function(all_data,False),gt["P"],final_count=30)
+transformed_test = transform_next(transform_function(all_data_test,True))
+
+
+Model:
+params_cnn2d_24x24 = CNN2DNetworkParams(
+    conv=[Conv2DParams(kernel=(5,5),pool_size=(3,3),filters=64,normalization=True,activation="relu", dropout=drop),
+          Conv2DParams(kernel=(5,5),pool_size=(3,3),filters=512, normalization=True,activation="relu", dropout=drop),
+          Conv2DParams(kernel=(5,5),pool_size=(2,2),filters=1024, normalization=True,activation="relu", dropout=drop),
+          ],
+    flatten=FlattenParams(dropout=drop,normalization=True),
+    deep=[DeepLayerParams(neurons=1000,dropout=drop,normalization=True),
+          DeepLayerParams(neurons=400,dropout=drop,normalization=True)],
+    generic=GenericNeuralNetworkParams(
+        prepare_function=lambda data, is_test: pipe(data,[
+            lambda d: d]), 
+        epochs=epochs,
+        optimizer=optimizer,loss=tf.losses.Huber()
+        )
+)
+
+
+----------------------
+Mg:
+
+Prep Used:
+transform_set7 = lambda d, is_test: pipe(d,[
+    make_resize_block(24, pre_fill=0, order=2, extend_strategy="padding"),
+    lambda d: savgol_block(d,5,2,1,2),
+    lambda d: np.ma.filled(d,0)
+]) 
+
+Layer selection:
+transformed, transform_next, indices = fcbf_method(transform_function(all_data,False),gt["Mg"],final_count=60)
+transformed_test = transform_next(transform_function(all_data_test,True))
+
+Model:
+params_cnn2d_24x24 = CNN2DNetworkParams(
+    conv=[Conv2DParams(kernel=(5,5),pool_size=(3,3),filters=64,normalization=True,activation="relu", dropout=drop),
+          Conv2DParams(kernel=(5,5),pool_size=(3,3),filters=512, normalization=True,activation="relu", dropout=drop),
+          Conv2DParams(kernel=(5,5),pool_size=(2,2),filters=1024, normalization=True,activation="relu", dropout=drop),
+          ],
+    flatten=FlattenParams(dropout=drop,normalization=True),
+    deep=[DeepLayerParams(neurons=1000,dropout=drop,normalization=True),
+          DeepLayerParams(neurons=400,dropout=drop,normalization=True)],
+    generic=GenericNeuralNetworkParams(
+        prepare_function=lambda data, is_test: pipe(data,[
+            lambda d: d]), 
+        epochs=epochs,
+        optimizer=optimizer,loss=tf.losses.Huber()
+        )
+)
+
+
+
+
+
+
+---------------------
+pH:
+
+Prep Used:
+def process_best_parrarel(d):
+    cr = continuum_removal1d(d)
+    sg = savgol_block1d(d,11,2,2,1)
+    #dwt = wavelet_transform1d(d,"dmey",result_wave_count=210)
+    return np.concatenate([cr,sg],axis=1)
+
+
+test_1 = lambda d, is_test: pipe(d,[
+    mean_1d_block,
+    process_best_parrarel,
+])
+
+Model:
+params_rf = RandomForestParams(lambda data, is_test: normalize_layers(data,not is_test))
